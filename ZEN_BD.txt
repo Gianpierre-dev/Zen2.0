@@ -1,0 +1,354 @@
+create database Zen_BD
+go
+USE Zen_BD
+
+GO
+
+CREATE TABLE TIPO_PERSONA(
+IdTipoPersona  int primary key,
+Descripcion varchar(100),
+Estado bit default 1,
+FechaCreacion datetime default getdate()
+)
+
+go
+
+CREATE TABLE PERSONA(
+IdPersona int primary key identity,
+Documento varchar(100),
+Nombre varchar(100),
+Direccion varchar(100),
+Telefono varchar(100),
+Clave varchar(100),
+IdTipoPersona int references TIPO_PERSONA(IdTipoPersona),
+Estado bit default 1,
+FechaCreacion datetime default getdate()
+)
+
+go
+
+CREATE TABLE PROVEEDOR(
+IdProveedor int primary key identity,
+Documento varchar(100),
+RazonSocial varchar(100),
+Correo varchar(100),
+Telefono varchar(100),
+Estado bit default 1,
+FechaCreacion datetime default getdate()
+)
+
+go
+
+CREATE TABLE CATEGORIA(
+IdCategoria int primary key identity,
+Descripcion varchar(100),
+Estado bit default 1,
+FechaCreacion datetime default getdate()
+)
+
+go
+
+CREATE TABLE PRODUCTO(
+IdProducto int primary key identity,
+Codigo varchar(100),
+Nombre varchar(100),
+Descripcion varchar(100),
+IdCategoria int references CATEGORIA(IdCategoria),
+Stock int default 0,
+PrecioCompra decimal(10,2) default 0,
+PrecioVenta decimal(10,2) default 0,
+Estado bit default 1,
+FechaCreacion datetime default getdate()
+)
+
+GO 
+
+CREATE TABLE TIENDA(
+IdTienda int PRIMARY KEY,
+Documento varchar(100),
+RazonSocial varchar(100),
+Correo varchar(100),
+Telefono varchar(100)
+)
+
+go
+
+create table COMPRA(
+IdCompra int primary key identity(1,1),
+IdPersona int references Persona(IdPersona),
+IdProveedor int references PROVEEDOR(IdProveedor),
+MontoTotal decimal(10,2) default 0,
+TipoDocumento varchar(100) default 'Boleta',
+NumeroDocumento varchar(100),
+FechaRegistro datetime default getdate()
+)
+
+go
+
+create table DETALLE_COMPRA(
+IdDetalleCompra int primary key identity(1,1),
+IdCompra int references COMPRA(IdCompra),
+IdProducto int references Producto(IdProducto),
+Cantidad int,
+PrecioCompra decimal(10,2),
+PrecioVenta decimal(10,2),
+Total decimal(10,2),
+FechaRegistro datetime default getdate()
+)
+
+
+
+go 
+
+
+create table VENTA(
+IdVenta int primary key identity(1,1),
+TipoDocumento varchar(100),
+NumeroDocumento varchar(100),
+IdUsuario int references PERSONA(IdPersona),
+DocumentoCliente varchar(100),
+NombreCliente varchar(100),
+TotalPagar  decimal(10,2),
+PagoCon decimal(10,2),
+Cambio decimal(10,2),
+FechaRegistro datetime default getdate()
+)
+
+go
+
+create table DETALLE_VENTA(
+IdDetalleVenta int primary key identity(1,1),
+IdVenta int references VENTA(IdVenta),
+IdProducto int references PRODUCTO(IdProducto),
+Cantidad int,
+PrecioVenta decimal(10,2),
+SubTotal decimal(10,2),
+FechaRegistro datetime default getdate()
+)
+
+go
+
+
+
+
+
+
+
+
+
+create PROC sp_RegistrarPersona(
+@Documento varchar(100),
+@Nombre varchar(100),
+@Direccion varchar(100),
+@Telefono varchar(100),
+@Clave varchar(100),
+@IdTipoPersona int,
+@Resultado int output
+)as
+begin
+	SET @Resultado = 0
+	DECLARE @IDPERSONA INT 
+	IF NOT EXISTS (SELECT * FROM persona WHERE Documento = @Documento)
+	begin
+		insert into persona(Documento,Nombre,Direccion,Telefono,Clave,IdTipoPersona) values (
+		@Documento,@Nombre,@Direccion,@Telefono,@Clave,@IdTipoPersona)
+
+		set @Resultado = SCOPE_IDENTITY()
+	end
+	
+end
+
+go
+
+--PROCEDIMIENTO PARA MODIFICAR PERSONA
+create procedure sp_ModificarPersona(
+@IdPersona int,
+@Documento varchar(100),
+@Nombre varchar(100),
+@Direccion varchar(100),
+@Telefono varchar(100),
+@Clave varchar(100),
+@IdTipoPersona int,
+@Resultado bit output
+)
+as
+begin
+	SET @Resultado = 1
+	IF NOT EXISTS (SELECT * FROM persona WHERE Documento =@Documento and IdPersona != @IdPersona)
+		
+		update PERSONA set
+		Documento = @Documento,
+		Nombre = @Nombre,
+		Direccion = @Direccion,
+		Telefono = @Telefono,
+		IdTipoPersona = @IdTipoPersona
+		where IdPersona = @IdPersona
+	ELSE
+		SET @Resultado = 0
+
+end
+
+
+GO
+
+--PROCEDIMIENTO PARA GUARDAR PROVEEDOR
+create PROC sp_RegistrarProveedor(
+@Documento varchar(100),
+@RazonSocial varchar(100),
+@Correo varchar(100),
+@Telefono varchar(100),
+@Resultado int output
+)as
+begin
+	SET @Resultado = 0
+	DECLARE @IDPERSONA INT 
+	IF NOT EXISTS (SELECT * FROM PROVEEDOR WHERE Documento = @Documento)
+	begin
+		insert into PROVEEDOR(Documento,RazonSocial,Correo,Telefono) values (
+		@Documento,@RazonSocial,@Correo,@Telefono)
+
+		set @Resultado = SCOPE_IDENTITY()
+	end
+	
+end
+
+go
+
+
+--PROCEDIMIENTO PARA MODIFICAR PROVEEDOR
+create procedure sp_ModificarProveedor(
+@IdProveedor int,
+@Documento varchar(100),
+@RazonSocial varchar(100),
+@Correo varchar(100),
+@Telefono varchar(100),
+@Resultado bit output
+)
+as
+begin
+	SET @Resultado = 1
+	IF NOT EXISTS (SELECT * FROM PROVEEDOR WHERE Documento =@Documento and IdProveedor != @IdProveedor)
+		
+		update PROVEEDOR set
+		Documento = @Documento,
+		RazonSocial = @RazonSocial,
+		Correo = @Correo,
+		Telefono = @Telefono
+		where IdProveedor = @IdProveedor
+	ELSE
+		SET @Resultado = 0
+
+end
+
+
+GO
+
+--PROCEDIMIENTO PARA GUARDAR CATEGORIA
+create PROC sp_RegistrarCategoria(
+@Descripcion varchar(100),
+@Resultado int output
+)as
+begin
+	SET @Resultado = 0
+	DECLARE @IDPERSONA INT 
+	IF NOT EXISTS (SELECT * FROM CATEGORIA WHERE Descripcion = @Descripcion)
+	begin
+		insert into CATEGORIA(Descripcion) values (@Descripcion)
+
+		set @Resultado = SCOPE_IDENTITY()
+	end
+	
+end
+
+
+go
+
+
+--PROCEDIMIENTO PARA MODIFICAR CATEGORIA
+create procedure sp_ModificarCategoria(
+@IdCategoria int,
+@Descripcion varchar(100),
+@Resultado bit output
+)
+as
+begin
+	SET @Resultado = 1
+	IF NOT EXISTS (SELECT * FROM CATEGORIA WHERE Descripcion =@Descripcion and IdCategoria != @IdCategoria)
+		
+		update CATEGORIA set
+		Descripcion = @Descripcion
+		where IdCategoria = @IdCategoria
+	ELSE
+		SET @Resultado = 0
+
+end
+
+
+GO
+
+--PROCEDIMIENTO PARA GUARDAR PRODUCTO
+create PROC sp_RegistrarProducto(
+@Codigo varchar(100),
+@Nombre varchar(100),
+@Descripcion varchar(100),
+@IdCategoria int,
+@Resultado int output
+)as
+begin
+	SET @Resultado = 0
+	IF NOT EXISTS (SELECT * FROM producto WHERE Codigo = @Codigo)
+	begin
+		insert into producto(Codigo,Nombre,Descripcion,IdCategoria) values (@Codigo,@Nombre,@Descripcion,@IdCategoria)
+
+		set @Resultado = SCOPE_IDENTITY()
+	end
+	
+end
+
+go
+
+--PROCEDIMIENTO PARA MODIFICAR PRODUCTO
+create procedure sp_ModificarProducto(
+@IdProducto int,
+@Codigo varchar(100),
+@Nombre varchar(100),
+@Descripcion varchar(100),
+@IdCategoria int,
+@Resultado bit output
+)
+as
+begin
+	SET @Resultado = 1
+	IF NOT EXISTS (SELECT * FROM PRODUCTO WHERE codigo =@Codigo and IdProducto != @IdProducto)
+		
+		update PRODUCTO set
+		codigo = @Codigo,
+		Nombre = @Nombre,
+		Descripcion = @Descripcion,
+		IdCategoria = @IdCategoria
+		where IdProducto = @IdProducto
+	ELSE
+		SET @Resultado = 0
+
+end
+
+USE Zen_ofi
+
+GO
+insert into TIPO_PERSONA(IdTipoPersona, Descripcion) values
+(1,'Admin'),
+(2,'Empleado'),
+(3,'Cliente')
+
+
+go
+
+
+insert into PERSONA(documento,nombre,clave,IdTipoPersona) values
+('77091210','Admin','123',1),
+('20202020','Empleado','456',2)
+
+GO
+
+insert into TIENDA(IdTienda,Documento,RazonSocial,Correo,Telefono) 
+VALUES (1,'0','ZEN','ZENTUPLANTITA@GMAIL.COM','987274218')
