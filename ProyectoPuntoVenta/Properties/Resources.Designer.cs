@@ -385,7 +385,7 @@ namespace ProyectoPuntoVenta.Properties {
         ///            &lt;tr&gt; &lt;td colspan=&quot;2&quot;&gt;&lt;/td&gt;&lt;/tr&gt;
         ///            &lt;tr&gt; &lt;td colspan=&quot;2&quot;&gt;&lt;/td&gt;&lt;/tr&gt;
         ///            &lt;tr style=&quot;font-size:13px&quot;&gt;
-        ///                &lt;td align=&quot;center&quot; colspan=&quot;2&quot;&gt;RUC: [resto de la cadena truncado]&quot;;.
+        ///                &lt;td align=&quot;center&quot; co [resto de la cadena truncado]&quot;;.
         /// </summary>
         internal static string Ticket {
             get {
